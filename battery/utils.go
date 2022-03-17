@@ -25,7 +25,7 @@ func runCmd(cmd *exec.Cmd) ([]string, error) {
 	out, err := cmd.Output()
 
 	if err != nil {
-		return nil, err
+		return nil, &CommandError{cmd, err}
 	}
 
 	content := strings.Split(
@@ -36,9 +36,12 @@ func runCmd(cmd *exec.Cmd) ([]string, error) {
 
 // ListPowerDevices returns a string slice containing every
 // power device available as provided by upower -e.
-func ListPowerDevices() ([]string, error) {
+func ListPowerDevices() []string {
 	cmd := exec.Command("upower", "-e")
-	return runCmd(cmd)
+	// there shouldn't be a problem with this command since init()
+	// will panic if there's something wrong with upower.
+	devs, _ := runCmd(cmd)
+	return devs
 }
 
 func fetchDeviceInfo(device string) ([]string, error) {
@@ -48,7 +51,7 @@ func fetchDeviceInfo(device string) ([]string, error) {
 	// upower returns status code 0 even if we provide an invalid
 	// device path to it... so we handle it ourselves here.
 	if len(out) == 1 && strings.Contains(out[0], "path invalid") {
-		return nil, fmt.Errorf("invalid device")
+		return nil, &InvalidDeviceError{device}
 	}
 
 	return out, err
@@ -75,22 +78,22 @@ func parseDeviceInfo(info []string) *BatteryInfo {
 				fallthrough
 
 			case "charge-cycles", "technology", "icon-name":
-				j := strings.LastIndex(line, " ")
-				binfo.setStringField(field, line[j+1:])
+				j := strings.LastIndex(line, " ") + 1
+				binfo.setStringField(field, line[j:])
 
 			case "power supply", "has history", "has statistics", "present", "rechargeable":
-				j := strings.LastIndex(line, " ")
+				j := strings.LastIndex(line, " ") + 1
 				b := false
 
-				if line[j+1:] == "yes" {
+				if line[j:] == "yes" {
 					b = true
 				}
 
 				binfo.setBoolField(field, b)
 
 			case "serial":
-				j := strings.LastIndex(line, " ")
-				valueStr := line[j+1:]
+				j := strings.LastIndex(line, " ") + 1
+				valueStr := line[j:]
 				value, _ := strconv.ParseUint(valueStr, 10, 64)
 				binfo.Serial = value
 
@@ -104,8 +107,8 @@ func parseDeviceInfo(info []string) *BatteryInfo {
 
 			case "percentage", "capacity":
 				line = strings.TrimRight(line, "%")
-				j := strings.LastIndex(line, " ")
-				valueStr := line[j+1:]
+				j := strings.LastIndex(line, " ") + 1
+				valueStr := line[j:]
 				value, _ := strconv.ParseFloat(valueStr, 32)
 
 				binfo.setFloatValue(field, float32(value))

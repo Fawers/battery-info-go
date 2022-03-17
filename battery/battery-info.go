@@ -1,34 +1,9 @@
 package battery
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 	"time"
 )
-
-var ErrDefaultDeviceNotFound = errors.New("default BAT device not found")
-
-type WattHour float32
-type Watt float32
-type Voltage float32
-type Percentage float32
-
-func (wh WattHour) String() string {
-	return fmt.Sprintf("%.3f Wh", wh)
-}
-
-func (w Watt) String() string {
-	return fmt.Sprintf("%.3f W", w)
-}
-
-func (v Voltage) String() string {
-	return fmt.Sprintf("%.3f V", v)
-}
-
-func (p Percentage) String() string {
-	return fmt.Sprintf("%.2f%%", p)
-}
 
 // History as listed by upower -i.
 type History struct {
@@ -83,9 +58,12 @@ type BatteryInfo struct {
 // given device. The device can be acquired with ListPowerDevices.
 // Alternatively, if something wrong happens when fetching or
 // parsing the battery information, an error may be returned.
+//
+// The following error types may be returned:
+// *InvalidDeviceError,
+// *CommandError.
 func NewForDevice(device string) (*BatteryInfo, error) {
 	info, err := fetchDeviceInfo(device)
-	fmt.Println("==>", info, err)
 
 	if err != nil {
 		return nil, err
@@ -98,14 +76,14 @@ func NewForDevice(device string) (*BatteryInfo, error) {
 
 // NewForDefaultDevice returns a *BatteryInfo for the default
 // device, which is the one that ends with BAT#, where # is a
-// number. It may return an error when trying to list the
-// available power devices.
+// number.
+//
+// The following error types may be returned:
+// *DefaultDeviceNotFoundError,
+// *InvalidDeviceError,
+// *CommandError.
 func NewForDefaultDevice() (*BatteryInfo, error) {
-	devs, err := ListPowerDevices()
-
-	if err != nil {
-		return nil, err
-	}
+	devs := ListPowerDevices()
 
 	for _, dev := range devs {
 		if strings.LastIndex(dev, "BAT") != -1 {
@@ -113,11 +91,13 @@ func NewForDefaultDevice() (*BatteryInfo, error) {
 		}
 	}
 
-	return nil, ErrDefaultDeviceNotFound
+	return nil, &DefaultDeviceNotFoundError{}
 }
 
 // Update returns a new *BatteryInfo by re-parsing the battery
 // information as done by NewForDevice.
+//
+// Possible returnable errors are the same as for NewForDevice().
 func (bi *BatteryInfo) Update() (*BatteryInfo, error) {
 	return NewForDevice(bi.SrcDevice)
 }
