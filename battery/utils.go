@@ -8,6 +8,19 @@ import (
 	"time"
 )
 
+func init() {
+	// ensure upower is present on system
+	out, err := runCmd(exec.Command("upower", "-v"))
+
+	if err != nil {
+		panic(err)
+	}
+
+	if !strings.HasPrefix(out[0], "UPower client version") {
+		panic("Wrong or unknown UPower command present in system")
+	}
+}
+
 func runCmd(cmd *exec.Cmd) ([]string, error) {
 	out, err := cmd.Output()
 
@@ -21,14 +34,24 @@ func runCmd(cmd *exec.Cmd) ([]string, error) {
 	return content, nil
 }
 
-func listPowerDevices() ([]string, error) {
+// ListPowerDevices returns a string slice containing every
+// power device available as provided by upower -e.
+func ListPowerDevices() ([]string, error) {
 	cmd := exec.Command("upower", "-e")
 	return runCmd(cmd)
 }
 
 func fetchDeviceInfo(device string) ([]string, error) {
 	cmd := exec.Command("upower", "-i", device)
-	return runCmd(cmd)
+	out, err := runCmd(cmd)
+
+	// upower returns status code 0 even if we provide an invalid
+	// device path to it... so we handle it ourselves here.
+	if len(out) == 1 && strings.Contains(out[0], "path invalid") {
+		return nil, fmt.Errorf("invalid device")
+	}
+
+	return out, err
 }
 
 func parseDeviceInfo(info []string) *BatteryInfo {

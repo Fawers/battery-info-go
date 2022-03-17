@@ -7,10 +7,10 @@ import (
 )
 
 func main() {
-	info, err := battery.NewFromDefaultDevice()
+	info, err := battery.NewForDefaultDevice()
 
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("BOOM<%[1]T>: %[1]s\n", err)
 	}
 
 	fmt.Printf("%#v\n", info)

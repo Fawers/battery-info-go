@@ -30,17 +30,24 @@ func (p Percentage) String() string {
 	return fmt.Sprintf("%.2f%%", p)
 }
 
+// History as listed by upower -i.
 type History struct {
 	Type   string
 	Status string
 	Time   time.Time
 }
 
+// Energy holds the information of the energy
+// of the battery, as well as its current percentage
+// and capacity.
 type Energy struct {
 	Current, Empty, Full, FullDesign WattHour
 	Percentage, Capacity             Percentage
 }
 
+// Battery holds the specific information of the battery,
+// such as its current state, if it's rechargeable, its
+// voltage, technology used, and time to empty or full.
 type Battery struct {
 	Present      bool
 	Rechargeable bool
@@ -56,6 +63,8 @@ type Battery struct {
 	IconName     string
 }
 
+// BatteryInfo holds the general information of the battery,
+// such as its model, vendor, serial, among others.
 type BatteryInfo struct {
 	SrcDevice   string
 	NativePath  string
@@ -70,8 +79,13 @@ type BatteryInfo struct {
 	History     []History
 }
 
-func NewFromDevice(device string) (*BatteryInfo, error) {
+// NewForDevice constructs a new *BatteryInfo for the
+// given device. The device can be acquired with ListPowerDevices.
+// Alternatively, if something wrong happens when fetching or
+// parsing the battery information, an error may be returned.
+func NewForDevice(device string) (*BatteryInfo, error) {
 	info, err := fetchDeviceInfo(device)
+	fmt.Println("==>", info, err)
 
 	if err != nil {
 		return nil, err
@@ -82,8 +96,12 @@ func NewFromDevice(device string) (*BatteryInfo, error) {
 	return bi, nil
 }
 
-func NewFromDefaultDevice() (*BatteryInfo, error) {
-	devs, err := listPowerDevices()
+// NewForDefaultDevice returns a *BatteryInfo for the default
+// device, which is the one that ends with BAT#, where # is a
+// number. It may return an error when trying to list the
+// available power devices.
+func NewForDefaultDevice() (*BatteryInfo, error) {
+	devs, err := ListPowerDevices()
 
 	if err != nil {
 		return nil, err
@@ -91,15 +109,17 @@ func NewFromDefaultDevice() (*BatteryInfo, error) {
 
 	for _, dev := range devs {
 		if strings.LastIndex(dev, "BAT") != -1 {
-			return NewFromDevice(dev)
+			return NewForDevice(dev)
 		}
 	}
 
 	return nil, ErrDefaultDeviceNotFound
 }
 
+// Update returns a new *BatteryInfo by re-parsing the battery
+// information as done by NewForDevice.
 func (bi *BatteryInfo) Update() (*BatteryInfo, error) {
-	return NewFromDevice(bi.SrcDevice)
+	return NewForDevice(bi.SrcDevice)
 }
 
 func (bi *BatteryInfo) setStringField(field, value string) {
