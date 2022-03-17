@@ -1,0 +1,29 @@
+  native-path:          BAT1
+  vendor:               SANYO
+  model:                AL15A32
+  serial:               11822
+  power supply:         yes
+  updated:              Wed 16 Mar 2022 04:04:43 PM -03 (87 seconds ago)
+  has history:          yes
+  has statistics:       yes
+  battery
+    present:             yes
+    rechargeable:        yes
+    state:               discharging
+    warning-level:       none
+    energy:              7.9624 Wh
+    energy-empty:        0 Wh
+    energy-full:         14.6816 Wh
+    energy-full-design:  37 Wh
+    energy-rate:         10.1528 W
+    voltage:             15.287 V
+    charge-cycles:       N/A
+    time to empty:       47.0 minutes
+    percentage:          60%
+    capacity:            39.68%
+    technology:          lithium-ion
+    icon-name:          'battery-full-symbolic'
+  History (charge):
+    1647457483	60.000	discharging
+  History (rate):
+    1647457483	10.153	discharging
