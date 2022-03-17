@@ -40,7 +40,6 @@ func parseDeviceInfo(info []string) *BatteryInfo {
 		line = strings.TrimSpace(line)
 
 		if strings.HasPrefix(line, "History") {
-			fmt.Println("history")
 			j := strings.IndexRune(line, '(') + 1
 			k := strings.IndexRune(line, ')')
 			historyType = line[j:k]
@@ -113,7 +112,6 @@ func parseDeviceInfo(info []string) *BatteryInfo {
 				binfo.Updated = date
 			}
 		} else if historyParts := strings.Split(line, "\t"); len(historyParts) == 3 {
-			fmt.Println("parsee")
 			timestampStr, _ := strconv.Atoi(historyParts[0])
 			timestamp := time.Unix(int64(timestampStr), 0)
 			status := historyParts[2]
